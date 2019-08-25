@@ -1,10 +1,11 @@
-package cn.itcast.travel.web.servlet;
+package cn.itcast.travel.web.servlet.old;
 
 import cn.itcast.travel.domain.ResultInfo;
 import cn.itcast.travel.domain.User;
 import cn.itcast.travel.service.UserService;
 import cn.itcast.travel.service.impl.UserServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.util.BeanUtil;
 import org.apache.commons.beanutils.BeanUtils;
 
 import javax.servlet.ServletException;
@@ -15,15 +16,20 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import java.util.Map;
 
-@WebServlet("/loginServlet")
-public class LoginServlet extends HttpServlet {
+@WebServlet("/registServlet")
+public class RegistServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         //校验验证码
+        //获取用户验证码
         String check = req.getParameter("check");
+
+
+        System.out.println(check);
+        //获取servlet验证码
         HttpSession session = req.getSession();
+//        System.out.println("regist:"+session.getId());
         String checkcode_server = (String) session.getAttribute("CHECKCODE_SERVER");
         session.removeAttribute("CHECKCODE_SERVER");
         if(checkcode_server == null || !checkcode_server.equalsIgnoreCase(check)){
@@ -41,7 +47,9 @@ public class LoginServlet extends HttpServlet {
         }
         //1.获取参数
         Map<String, String[]> map = req.getParameterMap();
+        //2.封装参数
         User user = new User();
+
         try {
             BeanUtils.populate(user,map);
         } catch (IllegalAccessException e) {
@@ -49,38 +57,27 @@ public class LoginServlet extends HttpServlet {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
-        //2 查询数据
-        UserService service = new UserServiceImpl();
-        User u =  service.login(user);
 
-        //3 判断
+        //3.完成注册
+        UserService service  = new UserServiceImpl();
+        boolean flag = service.regist(user);
+
+        //4.相应结果
         ResultInfo info = new ResultInfo();
-        if(u == null){
-            info.setFlag(false);
-            info.setErrorMsg("用户或密码错误");
-        }
-
-        if(u != null && !"Y".equals(u.getStatus())){
-            info.setFlag(false);
-            info.setErrorMsg("用户没有激活, 请激活之后再登录");
-        }
-
-        if(u != null && "Y".equals(u.getStatus())){
+        if(flag){
             info.setFlag(true);
-            Map map1 = new HashMap();
-            map1.put("uid",u.getUid());
-            map1.put("name",u.getName());
-
-            session.setAttribute("user",map1);
+        }else{
+            info.setFlag(false);
+            info.setErrorMsg("注册失败");
         }
 
-        //相应数据
+        //序列化为json
         ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(info);
 
-        //设置响应消息类型
+        //返回数据
         resp.setContentType("application/json;charset=utf-8");
-        //使用mapper的方法直接响应消息
-        mapper.writeValue(resp.getOutputStream(),info);
+        resp.getWriter().write(json);
     }
 
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

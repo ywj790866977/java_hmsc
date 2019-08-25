@@ -99,7 +99,7 @@
 							checkBirthday() &&
 							checkCode()
 					){
-						$.post("registServlet",$(this).serialize(),function (data) {
+						$.post("user/regist",$(this).serialize(),function (data) {
 							//判断返回的数据是否成功
 							if(data.flag){
 								//跳转成功页面

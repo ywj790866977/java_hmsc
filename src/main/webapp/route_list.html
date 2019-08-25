@@ -9,6 +9,121 @@
     <link rel="stylesheet" type="text/css" href="css/common.css">
     <link rel="stylesheet" href="css/search.css">
     <script src="js/jquery-3.3.1.js"></script>
+    <script src="js/getParameter.js"></script>
+    <script>
+        $(function () {
+            // var search = location.search;
+            // console.log(search)
+            // var cid = search.split("=")[1];
+            var rname = getParameter("rname");
+            if(rname){
+                rname  = window.decodeURIComponent(rname);
+
+            }
+            var cid = getParameter("cid");
+            // alert(rname);
+            // console.log(cid);
+            load(cid,null,rname)
+        });
+
+        function load(cid,currentPage,rname) {
+            $.get("route/pageQuery",{cid:cid,currentPage:currentPage,rname:rname},function (pb) {
+                console.log(pb);
+                //设置总页数和总记录数
+                $("#totalPage").html(pb.totalPage);
+                $("#totalCount").html(pb.totalCount);
+
+                //设置分页
+                var lis = "";
+                lis += '<li  onclick="javascript:load('+cid+',1,\''+rname+'\')"><a href="javascript:void">首页</a></li>\n' ;
+                var beforeNum = pb.currentPage -1;
+                if(beforeNum <= 1){
+                    beforeNum = 1
+                }
+                lis += '<li onclick="javascript:load('+cid+','+beforeNum+',\''+rname+'\')" class="threeword"><a href="javascript:void(0)">上一页</a></li>';
+
+                // 优化页数显示
+                // 前五后四
+                // 前面不足5个时,需要后面补齐,凑足10个
+                // 后面不足4个时,前面需要补齐, 凑足10个
+
+                var begin;  // 开始位置
+                var end;  // 结束位置
+
+                if(pb.totalPage < 10){
+                    begin = 1;
+                    end = pb.totalPage;
+                }else{
+                    begin = currentPage  -5;
+                    end = currentPage +4;
+
+                    if(begin < 1){
+                        begin = 1;
+                        end = begin +9;
+                    }
+
+                    if(end > pb.totalPage){
+                        end = pb.totalPage;
+                        begin =  end - 9;
+                    }
+                }
+
+                for (var i = begin; i <= end; i++) {
+                    if(currentPage == i){
+                        lis += '<li class="curPage" onclick="javascript:load('+cid+','+i+',\''+rname+'\')"><a href="javascript:void(0)">'+i+'</a></li>'
+                    }else{
+                        lis += '<li onclick="javascript:load('+cid+','+i+',\''+rname+'\')"><a href="javascript:void(0)">'+i+'</a></li>'
+                    }
+                }
+
+
+
+                // for (var i =1; i <= pb.totalPage; i++){
+                //     if(currentPage == i){
+                //         lis += '<li class="curPage" onclick="javascript:load('+cid+','+i+')"><a href="javascript:void(0)">'+i+'</a></li>'
+                //     }else{
+                //         lis += '<li onclick="javascript:load('+cid+','+i+')"><a href="javascript:void(0)">'+i+'</a></li>'
+                //     }
+                // }
+
+                var nextNum = pb.currentPage +1;
+                if(nextNum >= pb.totalPage){
+                    nextNum = pb.totalPage;
+                }
+                lis += '<li onclick="javascript:load('+cid+','+nextNum+',\''+rname+'\')" class="threeword"><a href="javascript:;">下一页</a></li>\n'
+                lis += '<li onclick="javascript:load('+cid+','+pb.totalPage+',\''+rname+'\')" class="threeword"><a href="javascript:;">末页</a></li>'
+
+                $("#pageNum").html(lis);
+
+                //设置展示内容
+
+                var route_lis = "";
+                for (var i = 0; i <pb.list.length ; i++) {
+                    var route  = pb.list[i];
+
+                    route_lis += '<li>\n' +
+    '                            <div class="img"><img src="'+route.rimage+'" style="width:299px;"></div>\n' +
+    '                            <div class="text1">\n' +
+    '                                <p>'+route.rname+'</p>\n' +
+    '                                <br/>\n' +
+    '                                <p>'+route.routeIntroduce+'</p>\n' +
+    '                            </div>\n' +
+    '                            <div class="price">\n' +
+    '                                <p class="price_num">\n' +
+    '                                    <span>&yen;</span>\n' +
+    '                                    <span>'+route.price+'</span>\n' +
+    '                                    <span>起</span>\n' +
+    '                                </p>\n' +
+    '                                <p><a href="route_detail.html?rid='+route.rid+'">查看详情</a></p>\n' +
+    '                            </div>\n' +
+    '                        </li>'
+                }
+                $("#route").html(route_lis)
+
+            })
+
+        }
+    </script>
 </head>
 <body>
 <!--引入头部-->
@@ -25,8 +140,8 @@
                         <span>商品信息</span>
                         <span class="jg">价格</span>
                     </div>
-                    <ul>
-                        <li>
+                    <ul id="route">
+                        <!--<li>
                             <div class="img"><img src="images/04-search_03.jpg" alt=""></div>
                             <div class="text1">
                                 <p>【减100元 含除夕/春节出发】广州增城三英温泉度假酒店/自由行套票</p>
@@ -153,17 +268,17 @@
                                 </p>
                                 <p><a href="route_detail.html">查看详情</a></p>
                             </div>
-                        </li>
+                        </li>-->
                     </ul>
                     <div class="page_num_inf">
                         <i></i> 共
-                        <span>12</span>页<span>132</span>条
+                        <span id="totalPage">12</span>页<span id="totalCount">132</span>条
                     </div>
                     <div class="pageNum">
-                        <ul>
-                            <li><a href="">首页</a></li>
-                            <li class="threeword"><a href="#">上一页</a></li>
-                            <li><a href="#">1</a></li>
+                        <ul id="pageNum">
+<!--                            <li><a href="">首页</a></li>-->
+<!--                            <li class="threeword"><a href="#">上一页</a></li>-->
+                            <!--<li><a href="#">1</a></li>
                             <li><a href="#">2</a></li>
                             <li><a href="#">3</a></li>
                             <li><a href="#">4</a></li>
@@ -172,9 +287,9 @@
                             <li><a href="#">7</a></li>
                             <li><a href="#">8</a></li>
                             <li><a href="#">9</a></li>
-                            <li><a href="#">10</a></li>
-                            <li class="threeword"><a href="javascript:;">下一页</a></li>
-                            <li class="threeword"><a href="javascript:;">末页</a></li>
+                            <li><a href="#">10</a></li>-->
+<!--                            <li class="threeword"><a href="javascript:;">下一页</a></li>-->
+<!--                            <li class="threeword"><a href="javascript:;">末页</a></li>-->
                         </ul>
                     </div>
                 </div>

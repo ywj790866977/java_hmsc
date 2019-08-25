@@ -1,5 +1,6 @@
-package cn.itcast.travel.web.servlet;
+package cn.itcast.travel.web.servlet.old;
 
+import cn.itcast.travel.domain.ResultInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.servlet.ServletException;
@@ -10,14 +11,16 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
-@WebServlet("/findUserServlet")
-public class FindUserServlet extends HttpServlet {
+@WebServlet("/exitServlet")
+public class ExitServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        HttpSession session = req.getSession();
-        Object user = session.getAttribute("user");
-        ObjectMapper mapper = new ObjectMapper();
-        resp.setContentType("application/json:charset=utf-8");
-        mapper.writeValue(resp.getOutputStream(),user);
+
+        req.getSession().invalidate();
+//        resp.sendRedirect(req.getContextPath()+"/login.html");
+        ResultInfo info = new ResultInfo();
+        info.setFlag(true);
+        info.setErrorMsg("退出成功!");
+        new ObjectMapper().writeValue(resp.getOutputStream(),info);
     }
 
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
